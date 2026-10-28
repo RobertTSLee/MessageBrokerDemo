@@ -71,3 +71,8 @@
    dotnet run --launch-profile https --urls "https://localhost:7077"
    ```
 3. Access Swagger UI at https://localhost:7077/swagger/index.html
+
+
+**MessageBroker Topology**
+•	Worker: process-job queue, bound to job.process, handled by ProcessJobHandler.
+•	Consumer: job-notifications queue, bound to job.*.notification, handled by JobNotificationHandler.

@@ -14,6 +14,11 @@ public sealed class RabbitMqPublisher(IOptions<RabbitMqOptions> options) : IMess
     private IChannel? _channel;
     private volatile string? _returnReplyText;
 
+    /*Bottleneck
+     * The PublishAsync method is a bottleneck because it uses a SemaphoreSlim to ensure that only one thread can publish a message at a time. 
+     * This is necessary because the RabbitMQ channel is not thread-safe, 
+     * but it can lead to contention and reduced throughput when multiple threads are trying to publish messages concurrently.
+     */
     public async Task PublishAsync(string routingKey, string payload, CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);

@@ -37,8 +37,20 @@ public sealed class RabbitMqConsumer(
         _connection = await factory.CreateConnectionAsync(stoppingToken);
         _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
+        var deadLetterExchange = $"{_options.Exchange}.dlx";
+        var deadLetterQueue = $"{QueueName}.dlq";
+
         await _channel.ExchangeDeclareAsync(_options.Exchange, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
-        await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+        await _channel.ExchangeDeclareAsync(deadLetterExchange, ExchangeType.Direct, durable: true, cancellationToken: stoppingToken);
+        await _channel.QueueDeclareAsync(deadLetterQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+        await _channel.QueueBindAsync(deadLetterQueue, deadLetterExchange, QueueName, cancellationToken: stoppingToken);
+
+        var queueArguments = new Dictionary<string, object?>
+        {
+            ["x-dead-letter-exchange"] = deadLetterExchange,
+            ["x-dead-letter-routing-key"] = QueueName
+        };
+        await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, arguments: queueArguments, cancellationToken: stoppingToken);
         await _channel.QueueBindAsync(QueueName, _options.Exchange, RoutingKey, cancellationToken: stoppingToken);
         await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false, cancellationToken: stoppingToken);
 
