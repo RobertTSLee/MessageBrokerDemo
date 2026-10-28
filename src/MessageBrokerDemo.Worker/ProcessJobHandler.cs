@@ -20,7 +20,15 @@ public sealed class ProcessJobHandler(WCMSDBContext db, ILogger<ProcessJobHandle
         var message = JsonSerializer.Deserialize<ProcessJobMessage>(payload)
             ?? throw new InvalidOperationException($"Invalid {routingKey} payload.");
 
-        var job = await db.Jobs.FirstOrDefaultAsync(x => x.Id == message.Id, cancellationToken);
+        await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
+
+        var job = await db.Jobs
+            .FromSqlInterpolated($"""
+                SELECT * FROM jobs
+                WHERE "Id" = {message.Id}
+                FOR UPDATE
+                """)
+            .FirstOrDefaultAsync(cancellationToken);
         if (job is null)
         {
             logger.LogWarning("Job {JobId} not found, skipping.", message.Id);
@@ -76,5 +84,6 @@ public sealed class ProcessJobHandler(WCMSDBContext db, ILogger<ProcessJobHandle
         });
 
         await db.SaveChangesAsync(cancellationToken);
+        await tx.CommitAsync(cancellationToken);
     }
 }
