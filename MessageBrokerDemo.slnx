@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Doc/">
+    <File Path="docs/Design.md" />
+    <File Path="docs/Implementation.md" />
+    <File Path="docs/Requirements.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/MessageBrokerDemo.Model/MessageBrokerDemo.Model.csproj" />
+  <Project Path="src/MessageBrokerDemo.Outbox/MessageBrokerDemo.Outbox.csproj" />
+  <Project Path="src/MessageBrokerDemo.Worker/MessageBrokerDemo.Worker.csproj" />
+  <Project Path="src/MessageBrokerDemo.Data/MessageBrokerDemo.Data.csproj" />
+  <Project Path="src/MessageBrokerDemo.Consumer/MessageBrokerDemo.Consumer.csproj" />
+  <Project Path="src/MessageBroker.Broker/MessageBroker.csproj" />
+  <Project Path="src/MessageBrokerDemo.Api/MessageBrokerDemo.Api.csproj" />
+</Solution>
+

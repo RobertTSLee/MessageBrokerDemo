@@ -1,0 +1,6 @@
+@MessageBrokerDemo_HostAddress = http://localhost:5137
+
+GET {{MessageBrokerDemo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
