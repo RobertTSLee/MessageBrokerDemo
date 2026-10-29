@@ -22,6 +22,8 @@ public sealed class ProcessJobHandler(WCMSDBContext db, ILogger<ProcessJobHandle
 
         await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
 
+        // idempotency check: ensure the job exists and is not already completed or failed 
+        // use a select with FOR UPDATE to lock the row for processing, preventing concurrent processing of the same job
         var job = await db.Jobs
             .FromSqlInterpolated($"""
                 SELECT * FROM jobs

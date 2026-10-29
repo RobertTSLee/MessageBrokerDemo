@@ -76,3 +76,25 @@
 **MessageBroker Topology**
 •	Worker: process-job queue, bound to job.process, handled by ProcessJobHandler.
 •	Consumer: job-notifications queue, bound to job.*.notification, handled by JobNotificationHandler.
+
+**Flow Diagram**
+```mermaid
+graph TD
+    A[Client] -->|POST /api/upload| B[API]
+    B -->|Insert job Queued| C[(PostgreSQL jobs)]
+    D[Outbox Publisher] -->|FOR UPDATE SKIP LOCKED: Queued to Processing| C
+    D -->|Insert job.process event| E[(PostgreSQL outbox_events)]
+    D -->|Insert job completed/failed notification event| E
+    D -->|FOR UPDATE SKIP LOCKED: claim unpublished events| E
+    D -->|Publish with confirms| F{{RabbitMQ outbox topic exchange}}
+    F -->|job.process| G[process-job queue]
+    F -->|job.*.notification| H[job-notifications queue]
+    G -->|Deliver| I[Worker: ProcessJobHandler]
+    I -->|FOR UPDATE row lock: Completed or Failed| C
+    I -->|Insert job completed/failed notification event| E
+    D -->|Mark PublishedAtUtc or RetryCount and LastError| E
+    H -->|Deliver| J[Consumer: JobNotificationHandler]
+    G -.->|Failure, NACK requeue=false| K{{outbox.dlx}}
+    H -.->|Failure, NACK requeue=false| K
+    K -.-> L[process-job.dlq / job-notifications.dlq]
+```
